@@ -222,7 +222,8 @@
         }
 
         .component-content.expanded {
-            max-height: 1000px;
+            max-height: 2000px;
+            overflow-y: auto;
         }
 
         .trade-form {
@@ -577,10 +578,11 @@
                     <input type="date" id="tradeDate" class="date-input">
                     <span id="dayDisplay" style="font-size: 1.1rem; font-weight: 600;"></span>
                 </div>
-                <div style="display: flex; gap: 10px;">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <button class="btn" onclick="showHistory()">📊 Combined History</button>
                     <button class="btn" onclick="showNiftyHistory()">📈 Nifty History</button>
                     <button class="btn" onclick="showSensexHistory()">📉 Sensex History</button>
+                    <button class="btn" onclick="showDateWiseSummary()">📅 Date Summary</button>
                 </div>
             </div>
         </div>
@@ -778,7 +780,14 @@
     <div id="historyModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeHistory()">&times;</span>
-            <h2>📊 Trading History</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                <h2 id="historyTitle" style="margin: 0; color: #f8fafc;">📊 Trading History</h2>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="date" id="searchDate" class="date-input" placeholder="Search by date" style="padding: 10px 15px; font-size: 0.9rem;">
+                    <button class="btn" onclick="searchByDate()" style="padding: 10px 20px; font-size: 0.9rem;">🔍 Search</button>
+                    <button class="btn" onclick="clearSearch()" style="padding: 10px 20px; font-size: 0.9rem; background: linear-gradient(135deg, #6b7280, #4b5563);">Clear</button>
+                </div>
+            </div>
             <div id="historyContent"></div>
         </div>
     </div>
@@ -996,12 +1005,38 @@
             localStorage.setItem('tradingData', JSON.stringify(tradesData));
         }
 
+        let currentHistoryType = 'combined';
+        let currentSearchDate = null;
+
         function showHistory() {
+            currentHistoryType = 'combined';
+            document.getElementById('historyTitle').textContent = '📊 Combined Trading History';
+            displayHistory();
+        }
+
+        function showDateWiseSummary() {
+            currentHistoryType = 'summary';
+            document.getElementById('historyTitle').textContent = '📅 Date-wise Summary';
+            displayDateWiseSummary();
+        }
+
+        function displayHistory(searchDate = null) {
             const modal = document.getElementById('historyModal');
             const content = document.getElementById('historyContent');
             
             let historyHTML = '';
-            const sortedDates = Object.keys(tradesData).sort((a, b) => new Date(b) - new Date(a));
+            let sortedDates = Object.keys(tradesData).sort((a, b) => new Date(b) - new Date(a));
+            
+            // Filter by search date if provided
+            if (searchDate) {
+                sortedDates = sortedDates.filter(date => date === searchDate);
+                if (sortedDates.length === 0) {
+                    historyHTML = `<p style="text-align: center; color: #f59e0b; font-size: 1.2rem; margin: 50px 0; background: rgba(245,158,11,0.1); padding: 20px; border-radius: 12px; border: 1px solid rgba(245,158,11,0.3);">No trades found for ${searchDate}</p>`;
+                    content.innerHTML = historyHTML;
+                    modal.style.display = 'block';
+                    return;
+                }
+            }
             
             if (sortedDates.length === 0) {
                 historyHTML = '<p style="text-align: center; color: #6c757d; font-size: 1.2rem; margin: 50px 0;">No trading history found. Start adding trades to see your history!</p>';
@@ -1017,24 +1052,24 @@
                         <div class="date-card" onclick="toggleDateDetails('${date}')">
                             <div class="date-card-header">
                                 <span style="font-size: 1.1rem;">${date} (${dayData.day})</span>
-                                <span style="color: ${totalPL >= 0 ? '#27ae60' : '#e74c3c'}; font-weight: 700; font-size: 1.2rem;">₹${totalPL.toFixed(2)}</span>
+                                <span style="color: ${totalPL >= 0 ? '#10b981' : '#ef4444'}; font-weight: 700; font-size: 1.2rem;">₹${totalPL.toFixed(2)}</span>
                             </div>
                             <div class="date-stats">
                                 <div class="stat-item">
-                                    <div style="font-weight: 600; color: #2c3e50;">Total Trades</div>
-                                    <div style="font-size: 1.1rem; font-weight: 700;">${totalTrades}</div>
+                                    <div>Total Trades</div>
+                                    <div>${totalTrades}</div>
                                 </div>
                                 <div class="stat-item">
-                                    <div style="font-weight: 600; color: #e74c3c;">Nifty P&L</div>
-                                    <div style="color: ${niftyPL >= 0 ? '#27ae60' : '#e74c3c'}; font-weight: 700;">₹${niftyPL.toFixed(2)}</div>
+                                    <div>Nifty P&L</div>
+                                    <div style="color: ${niftyPL >= 0 ? '#10b981' : '#ef4444'}; font-weight: 700;">₹${niftyPL.toFixed(2)}</div>
                                 </div>
                                 <div class="stat-item">
-                                    <div style="font-weight: 600; color: #27ae60;">Sensex P&L</div>
-                                    <div style="color: ${sensexPL >= 0 ? '#27ae60' : '#e74c3c'}; font-weight: 700;">₹${sensexPL.toFixed(2)}</div>
+                                    <div>Sensex P&L</div>
+                                    <div style="color: ${sensexPL >= 0 ? '#10b981' : '#ef4444'}; font-weight: 700;">₹${sensexPL.toFixed(2)}</div>
                                 </div>
                                 <div class="stat-item">
-                                    <div style="font-weight: 600; color: #3498db;">Win Rate</div>
-                                    <div style="font-weight: 700;">${calculateWinRate([...dayData.nifty, ...dayData.sensex])}%</div>
+                                    <div>Win Rate</div>
+                                    <div>${calculateWinRate([...dayData.nifty, ...dayData.sensex])}%</div>
                                 </div>
                             </div>
                             <div class="history-trades" id="trades-${date}">
@@ -1046,6 +1081,129 @@
             }
             
             content.innerHTML = historyHTML;
+            modal.style.display = 'block';
+        }
+
+        function displayDateWiseSummary() {
+            const modal = document.getElementById('historyModal');
+            const content = document.getElementById('historyContent');
+            
+            let summaryHTML = '';
+            const sortedDates = Object.keys(tradesData).sort((a, b) => new Date(b) - new Date(a));
+            
+            if (sortedDates.length === 0) {
+                summaryHTML = '<p style="text-align: center; color: #6c757d; font-size: 1.2rem; margin: 50px 0;">No trading data available for summary!</p>';
+            } else {
+                // Overall Summary
+                const allTrades = [];
+                let totalPL = 0;
+                let totalBrokerage = 0;
+                let totalDays = sortedDates.length;
+                
+                sortedDates.forEach(date => {
+                    const dayData = tradesData[date];
+                    allTrades.push(...dayData.nifty, ...dayData.sensex);
+                    totalPL += [...dayData.nifty, ...dayData.sensex].reduce((sum, trade) => sum + trade.netPL, 0);
+                    totalBrokerage += [...dayData.nifty, ...dayData.sensex].reduce((sum, trade) => sum + trade.brokerage, 0);
+                });
+                
+                const totalTrades = allTrades.length;
+                const winningTrades = allTrades.filter(trade => trade.netPL > 0).length;
+                const winRate = totalTrades > 0 ? ((winningTrades / totalTrades) * 100).toFixed(1) : 0;
+                const avgPLPerDay = totalDays > 0 ? (totalPL / totalDays).toFixed(2) : 0;
+                const bestDay = Math.max(...sortedDates.map(date => {
+                    const dayData = tradesData[date];
+                    return [...dayData.nifty, ...dayData.sensex].reduce((sum, trade) => sum + trade.netPL, 0);
+                }));
+                const worstDay = Math.min(...sortedDates.map(date => {
+                    const dayData = tradesData[date];
+                    return [...dayData.nifty, ...dayData.sensex].reduce((sum, trade) => sum + trade.netPL, 0);
+                }));
+                
+                summaryHTML += `
+                    <div style="background: linear-gradient(135deg, rgba(30,41,59,0.9), rgba(51,65,85,0.9)); padding: 30px; border-radius: 20px; margin-bottom: 30px; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(20px); box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+                        <h3 style="margin-top: 0; color: #f8fafc; text-align: center; font-size: 2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">📈 Overall Trading Summary</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                            <div style="background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1)); padding: 25px; border-radius: 16px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                                <div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Total Trading Days</div>
+                                <div style="font-size: 2.2rem; font-weight: 800; color: #f8fafc;">${totalDays}</div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1)); padding: 25px; border-radius: 16px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                                <div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Total Trades</div>
+                                <div style="font-size: 2.2rem; font-weight: 800; color: #f8fafc;">${totalTrades}</div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1)); padding: 25px; border-radius: 16px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                                <div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Total P&L</div>
+                                <div style="font-size: 2.2rem; font-weight: 800; color: ${totalPL >= 0 ? '#10b981' : '#ef4444'};">₹${totalPL.toFixed(2)}</div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1)); padding: 25px; border-radius: 16px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                                <div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Win Rate</div>
+                                <div style="font-size: 2.2rem; font-weight: 800; color: #3b82f6;">${winRate}%</div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1)); padding: 25px; border-radius: 16px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                                <div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Avg P&L/Day</div>
+                                <div style="font-size: 2.2rem; font-weight: 800; color: ${avgPLPerDay >= 0 ? '#10b981' : '#ef4444'};">₹${avgPLPerDay}</div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1)); padding: 25px; border-radius: 16px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                                <div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Best Day</div>
+                                <div style="font-size: 2.2rem; font-weight: 800; color: #10b981;">₹${bestDay.toFixed(2)}</div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1)); padding: 25px; border-radius: 16px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                                <div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Worst Day</div>
+                                <div style="font-size: 2.2rem; font-weight: 800; color: #ef4444;">₹${worstDay.toFixed(2)}</div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1)); padding: 25px; border-radius: 16px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                                <div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Total Brokerage</div>
+                                <div style="font-size: 2.2rem; font-weight: 800; color: #f59e0b;">₹${totalBrokerage.toFixed(2)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Date-wise breakdown
+                summaryHTML += '<h3 style="color: #f8fafc; margin: 30px 0 20px 0; font-size: 1.5rem; font-weight: 700;">📅 Daily Breakdown</h3>';
+                
+                sortedDates.forEach(date => {
+                    const dayData = tradesData[date];
+                    const dayTrades = [...dayData.nifty, ...dayData.sensex];
+                    const dayPL = dayTrades.reduce((sum, trade) => sum + trade.netPL, 0);
+                    const dayBrokerage = dayTrades.reduce((sum, trade) => sum + trade.brokerage, 0);
+                    const dayWinRate = calculateWinRate(dayTrades);
+                    
+                    summaryHTML += `
+                        <div style="background: linear-gradient(135deg, rgba(15,23,42,0.8), rgba(30,41,59,0.8)); padding: 20px; border-radius: 16px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); transition: all 0.3s ease;" onmouseover="this.style.transform='translateX(5px)'" onmouseout="this.style.transform='translateX(0)'">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h4 style="margin: 0; color: #f8fafc; font-size: 1.2rem; font-weight: 700;">${date} (${dayData.day})</h4>
+                                <span style="color: ${dayPL >= 0 ? '#10b981' : '#ef4444'}; font-weight: 800; font-size: 1.3rem;">₹${dayPL.toFixed(2)}</span>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px;">
+                                <div style="text-align: center; padding: 10px; background: rgba(59,130,246,0.1); border-radius: 8px;">
+                                    <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 5px;">Trades</div>
+                                    <div style="font-weight: 700; color: #f8fafc;">${dayTrades.length}</div>
+                                </div>
+                                <div style="text-align: center; padding: 10px; background: rgba(239,68,68,0.1); border-radius: 8px;">
+                                    <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 5px;">Nifty</div>
+                                    <div style="font-weight: 700; color: #f8fafc;">${dayData.nifty.length}</div>
+                                </div>
+                                <div style="text-align: center; padding: 10px; background: rgba(16,185,129,0.1); border-radius: 8px;">
+                                    <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 5px;">Sensex</div>
+                                    <div style="font-weight: 700; color: #f8fafc;">${dayData.sensex.length}</div>
+                                </div>
+                                <div style="text-align: center; padding: 10px; background: rgba(59,130,246,0.1); border-radius: 8px;">
+                                    <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 5px;">Win Rate</div>
+                                    <div style="font-weight: 700; color: #3b82f6;">${dayWinRate}%</div>
+                                </div>
+                                <div style="text-align: center; padding: 10px; background: rgba(245,158,11,0.1); border-radius: 8px;">
+                                    <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 5px;">Brokerage</div>
+                                    <div style="font-weight: 700; color: #f59e0b;">₹${dayBrokerage.toFixed(2)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            content.innerHTML = summaryHTML;
             modal.style.display = 'block';
         }
 
@@ -1086,40 +1244,83 @@
             tradesDiv.classList.toggle('expanded');
         }
 
-        function showNiftyHistory() {
-            const modal = document.getElementById('historyModal');
-            const content = document.getElementById('historyContent');
-            
-            let historyHTML = '<h2 style="color: #e74c3c; margin-bottom: 20px;">📈 Nifty Trading History</h2>';
-            const sortedDates = Object.keys(tradesData).sort((a, b) => new Date(b) - new Date(a));
-            
-            // Filter dates that have Nifty trades
-            const niftyDates = sortedDates.filter(date => tradesData[date].nifty.length > 0);
-            
-            if (niftyDates.length === 0) {
-                historyHTML += '<p style="text-align: center; color: #6c757d; font-size: 1.2rem; margin: 50px 0;">No Nifty trading history found!</p>';
-            } else {
-                historyHTML += generateComponentHistory('nifty', niftyDates);
+        function searchByDate() {
+            const searchDate = document.getElementById('searchDate').value;
+            if (!searchDate) {
+                alert('Please select a date to search');
+                return;
             }
             
-            content.innerHTML = historyHTML;
-            modal.style.display = 'block';
+            currentSearchDate = searchDate;
+            
+            if (currentHistoryType === 'combined') {
+                document.getElementById('historyTitle').textContent = `📊 Trading History - ${searchDate}`;
+                displayHistory(searchDate);
+            } else if (currentHistoryType === 'nifty') {
+                document.getElementById('historyTitle').textContent = `📈 Nifty History - ${searchDate}`;
+                displayComponentHistory('nifty', searchDate);
+            } else if (currentHistoryType === 'sensex') {
+                document.getElementById('historyTitle').textContent = `📉 Sensex History - ${searchDate}`;
+                displayComponentHistory('sensex', searchDate);
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById('searchDate').value = '';
+            currentSearchDate = null;
+            
+            if (currentHistoryType === 'combined') {
+                document.getElementById('historyTitle').textContent = '📊 Combined Trading History';
+                displayHistory();
+            } else if (currentHistoryType === 'summary') {
+                document.getElementById('historyTitle').textContent = '📅 Date-wise Summary';
+                displayDateWiseSummary();
+            } else if (currentHistoryType === 'nifty') {
+                document.getElementById('historyTitle').textContent = '📈 Nifty Trading History';
+                showNiftyHistory();
+            } else if (currentHistoryType === 'sensex') {
+                document.getElementById('historyTitle').textContent = '📉 Sensex Trading History';
+                showSensexHistory();
+            }
+        }
+
+        function showNiftyHistory() {
+            currentHistoryType = 'nifty';
+            document.getElementById('historyTitle').textContent = '📈 Nifty Trading History';
+            displayComponentHistory('nifty');
         }
 
         function showSensexHistory() {
+            currentHistoryType = 'sensex';
+            document.getElementById('historyTitle').textContent = '📉 Sensex Trading History';
+            displayComponentHistory('sensex');
+        }
+
+        function displayComponentHistory(component, searchDate = null) {
             const modal = document.getElementById('historyModal');
             const content = document.getElementById('historyContent');
             
-            let historyHTML = '<h2 style="color: #27ae60; margin-bottom: 20px;">📉 Sensex Trading History</h2>';
-            const sortedDates = Object.keys(tradesData).sort((a, b) => new Date(b) - new Date(a));
+            let sortedDates = Object.keys(tradesData).sort((a, b) => new Date(b) - new Date(a));
             
-            // Filter dates that have Sensex trades
-            const sensexDates = sortedDates.filter(date => tradesData[date].sensex.length > 0);
+            // Filter by search date if provided
+            if (searchDate) {
+                sortedDates = sortedDates.filter(date => date === searchDate);
+                if (sortedDates.length === 0 || !tradesData[searchDate] || tradesData[searchDate][component].length === 0) {
+                    const historyHTML = `<p style="text-align: center; color: #f59e0b; font-size: 1.2rem; margin: 50px 0; background: rgba(245,158,11,0.1); padding: 20px; border-radius: 12px; border: 1px solid rgba(245,158,11,0.3);">No ${component} trades found for ${searchDate}</p>`;
+                    content.innerHTML = historyHTML;
+                    modal.style.display = 'block';
+                    return;
+                }
+            }
             
-            if (sensexDates.length === 0) {
-                historyHTML += '<p style="text-align: center; color: #6c757d; font-size: 1.2rem; margin: 50px 0;">No Sensex trading history found!</p>';
+            // Filter dates that have component trades
+            const componentDates = sortedDates.filter(date => tradesData[date][component].length > 0);
+            
+            let historyHTML = '';
+            if (componentDates.length === 0) {
+                historyHTML = `<p style="text-align: center; color: #6c757d; font-size: 1.2rem; margin: 50px 0;">No ${component} trading history found!</p>`;
             } else {
-                historyHTML += generateComponentHistory('sensex', sensexDates);
+                historyHTML = generateComponentHistory(component, componentDates);
             }
             
             content.innerHTML = historyHTML;
@@ -1236,5 +1437,5 @@
             }
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'984bba8113774081',t:'MTc1ODgxNTk2NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'984c49df07a47a1c',t:'MTc1ODgyMTgzNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
