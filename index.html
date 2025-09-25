@@ -1,0 +1,1240 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Template - Nifty & Sensex</title>
+    <style>
+        body {
+            box-sizing: border-box;
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            min-height: 100vh;
+            color: #f8fafc;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.1);
+            overflow: hidden;
+            animation: slideIn 0.8s ease-out;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f8fafc;
+            padding: 40px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+        }
+
+        .controls-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .date-selector {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .date-input {
+            padding: 14px 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            background: rgba(15,23,42,0.8);
+            color: #f8fafc;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+        }
+
+        .date-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: rgba(15,23,42,0.9);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1), 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59,130,246,0.3);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .components-container {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .component-card {
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            background: linear-gradient(135deg, rgba(30,41,59,0.8), rgba(51,65,85,0.8));
+            backdrop-filter: blur(20px);
+            position: relative;
+        }
+
+        .component-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(59,130,246,0.05), rgba(139,92,246,0.05));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .component-card:hover::before {
+            opacity: 1;
+        }
+
+        .component-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(59,130,246,0.2);
+            border-color: rgba(59,130,246,0.3);
+        }
+
+        .component-header {
+            padding: 20px;
+            font-weight: 700;
+            font-size: 1.5rem;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nifty-header {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            position: relative;
+        }
+
+        .nifty-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        }
+
+        .sensex-header {
+            background: linear-gradient(135deg, #10b981, #059669);
+            position: relative;
+        }
+
+        .sensex-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        }
+
+        .component-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(135deg, rgba(15,23,42,0.6), rgba(30,41,59,0.6));
+            backdrop-filter: blur(10px);
+        }
+
+        .component-content.expanded {
+            max-height: 1000px;
+        }
+
+        .trade-form {
+            padding: 25px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #e2e8f0;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-input, .form-select {
+            padding: 14px 16px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(15,23,42,0.8);
+            color: #f8fafc;
+            backdrop-filter: blur(10px);
+            font-weight: 500;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1), 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+            background: rgba(15,23,42,0.9);
+        }
+
+        .form-input::placeholder {
+            color: #94a3b8;
+        }
+
+        .add-trade-btn {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
+            margin-top: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .add-trade-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .add-trade-btn:hover::before {
+            left: 100%;
+        }
+
+        .add-trade-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(59,130,246,0.4);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .trades-table {
+            margin-top: 25px;
+            overflow-x: auto;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(15,23,42,0.8);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .table th {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            color: #f8fafc;
+            padding: 16px 12px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .table td {
+            padding: 14px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+            color: #e2e8f0;
+            font-weight: 500;
+        }
+
+        .table tbody tr:hover {
+            background-color: rgba(59,130,246,0.1);
+            transform: translateX(2px);
+        }
+
+        .summary-section {
+            background: linear-gradient(135deg, rgba(15,23,42,0.9), rgba(30,41,59,0.9));
+            padding: 25px;
+            margin-top: 25px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(20px);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+
+        .summary-item {
+            background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1));
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .summary-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            border-color: rgba(59,130,246,0.3);
+        }
+
+        .summary-label {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        .summary-value {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #f8fafc;
+        }
+
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background: #c0392b;
+            transform: scale(1.1);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            margin: 3% auto;
+            padding: 40px;
+            border-radius: 20px;
+            width: 95%;
+            max-width: 1200px;
+            max-height: 85vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            backdrop-filter: blur(20px);
+            color: #f8fafc;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .date-card {
+            background: linear-gradient(135deg, rgba(30,41,59,0.9), rgba(51,65,85,0.9));
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .date-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            border-color: rgba(59,130,246,0.4);
+            background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1));
+        }
+
+        .date-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            color: #f8fafc;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .date-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            font-size: 0.9rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 12px;
+            background: linear-gradient(135deg, rgba(15,23,42,0.8), rgba(30,41,59,0.8));
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            border-color: rgba(59,130,246,0.3);
+        }
+
+        .stat-item div:first-child {
+            color: #94a3b8;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.75rem;
+        }
+
+        .stat-item div:last-child {
+            color: #f8fafc;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-top: 4px;
+        }
+
+        .history-trades {
+            margin-top: 15px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .history-trades.expanded {
+            max-height: 400px;
+        }
+
+        .expand-icon {
+            float: right;
+            transition: transform 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .component-card.expanded .expand-icon {
+            transform: rotate(180deg);
+        }
+
+        @media (max-width: 768px) {
+            .components-container {
+                grid-template-columns: 1fr;
+                padding: 15px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📈 Trading Template</h1>
+            <div class="controls-section">
+                <div class="date-selector">
+                    <label for="tradeDate" style="font-size: 1.1rem;">Select Date:</label>
+                    <input type="date" id="tradeDate" class="date-input">
+                    <span id="dayDisplay" style="font-size: 1.1rem; font-weight: 600;"></span>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" onclick="showHistory()">📊 Combined History</button>
+                    <button class="btn" onclick="showNiftyHistory()">📈 Nifty History</button>
+                    <button class="btn" onclick="showSensexHistory()">📉 Sensex History</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="components-container">
+            <!-- Nifty Component -->
+            <div class="component-card" id="niftyCard">
+                <div class="component-header nifty-header">
+                    NIFTY 50
+                    <span class="expand-icon">▼</span>
+                </div>
+                <div class="component-content" id="niftyContent">
+                    <div class="trade-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Trade Type</label>
+                                <select class="form-select" id="niftyTradeType">
+                                    <option value="CE">Call (CE)</option>
+                                    <option value="PE">Put (PE)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Strike Price</label>
+                                <input type="number" class="form-input" id="niftyStrike" placeholder="Strike price">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Entry Price</label>
+                                <input type="number" class="form-input" id="niftyEntry" placeholder="Entry price" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label>Exit Price</label>
+                                <input type="number" class="form-input" id="niftyExit" placeholder="Exit price" step="0.01">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Quantity</label>
+                                <input type="number" class="form-input" id="niftyQuantity" placeholder="Quantity">
+                            </div>
+                            <div class="form-group">
+                                <label>Brokerage (₹)</label>
+                                <input type="number" class="form-input" id="niftyBrokerage" placeholder="Brokerage amount" step="0.01">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Notes (Optional)</label>
+                                <input type="text" class="form-input" id="niftyNotes" placeholder="Trade notes">
+                            </div>
+                        </div>
+                        <button class="add-trade-btn" onclick="addTrade('nifty')">Add Nifty Trade</button>
+                    </div>
+
+                    <div class="trades-table">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Strike</th>
+                                    <th>Entry</th>
+                                    <th>Exit</th>
+                                    <th>Qty</th>
+                                    <th>P&L</th>
+                                    <th>P&L%</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="niftyTradesBody">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="summary-section">
+                        <h3 style="margin-top: 0; color: #2c3e50;">Nifty Summary</h3>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <div class="summary-label">Total Trades</div>
+                                <div class="summary-value" id="niftyTotalTrades">0</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-label">Total P&L</div>
+                                <div class="summary-value" id="niftyTotalPL">₹0</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-label">Win Rate</div>
+                                <div class="summary-value" id="niftyWinRate">0%</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-label">Best Trade</div>
+                                <div class="summary-value" id="niftyBestTrade">₹0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sensex Component -->
+            <div class="component-card" id="sensexCard">
+                <div class="component-header sensex-header">
+                    SENSEX
+                    <span class="expand-icon">▼</span>
+                </div>
+                <div class="component-content" id="sensexContent">
+                    <div class="trade-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Trade Type</label>
+                                <select class="form-select" id="sensexTradeType">
+                                    <option value="CE">Call (CE)</option>
+                                    <option value="PE">Put (PE)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Strike Price</label>
+                                <input type="number" class="form-input" id="sensexStrike" placeholder="Strike price">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Entry Price</label>
+                                <input type="number" class="form-input" id="sensexEntry" placeholder="Entry price" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label>Exit Price</label>
+                                <input type="number" class="form-input" id="sensexExit" placeholder="Exit price" step="0.01">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Quantity</label>
+                                <input type="number" class="form-input" id="sensexQuantity" placeholder="Quantity">
+                            </div>
+                            <div class="form-group">
+                                <label>Brokerage (₹)</label>
+                                <input type="number" class="form-input" id="sensexBrokerage" placeholder="Brokerage amount" step="0.01">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Notes (Optional)</label>
+                                <input type="text" class="form-input" id="sensexNotes" placeholder="Trade notes">
+                            </div>
+                        </div>
+                        <button class="add-trade-btn" onclick="addTrade('sensex')">Add Sensex Trade</button>
+                    </div>
+
+                    <div class="trades-table">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Strike</th>
+                                    <th>Entry</th>
+                                    <th>Exit</th>
+                                    <th>Qty</th>
+                                    <th>P&L</th>
+                                    <th>P&L%</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sensexTradesBody">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="summary-section">
+                        <h3 style="margin-top: 0; color: #2c3e50;">Sensex Summary</h3>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <div class="summary-label">Total Trades</div>
+                                <div class="summary-value" id="sensexTotalTrades">0</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-label">Total P&L</div>
+                                <div class="summary-value" id="sensexTotalPL">₹0</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-label">Win Rate</div>
+                                <div class="summary-value" id="sensexWinRate">0%</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-label">Best Trade</div>
+                                <div class="summary-value" id="sensexBestTrade">₹0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeHistory()">&times;</span>
+            <h2>📊 Trading History</h2>
+            <div id="historyContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize data storage with date-wise organization
+        let tradesData = JSON.parse(localStorage.getItem('tradingData')) || {};
+
+        // Set today's date by default
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('tradeDate').value = today;
+        updateDayDisplay();
+        loadTodaysTrades();
+
+        // Component toggle functionality
+        document.getElementById('niftyCard').addEventListener('click', function(e) {
+            if (e.target.closest('.trade-form') || e.target.closest('.trades-table') || e.target.closest('.summary-section')) {
+                return;
+            }
+            toggleComponent('nifty');
+        });
+
+        document.getElementById('sensexCard').addEventListener('click', function(e) {
+            if (e.target.closest('.trade-form') || e.target.closest('.trades-table') || e.target.closest('.summary-section')) {
+                return;
+            }
+            toggleComponent('sensex');
+        });
+
+        // Date change handler
+        document.getElementById('tradeDate').addEventListener('change', function() {
+            updateDayDisplay();
+            loadTodaysTrades();
+        });
+
+        function toggleComponent(component) {
+            const card = document.getElementById(component + 'Card');
+            const content = document.getElementById(component + 'Content');
+            
+            card.classList.toggle('expanded');
+            content.classList.toggle('expanded');
+        }
+
+        function updateDayDisplay() {
+            const dateInput = document.getElementById('tradeDate');
+            const dayDisplay = document.getElementById('dayDisplay');
+            
+            if (dateInput.value) {
+                const date = new Date(dateInput.value);
+                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                dayDisplay.textContent = days[date.getDay()];
+            }
+        }
+
+        function addTrade(component) {
+            const selectedDate = document.getElementById('tradeDate').value;
+            const tradeType = document.getElementById(component + 'TradeType').value;
+            const strike = parseFloat(document.getElementById(component + 'Strike').value);
+            const entry = parseFloat(document.getElementById(component + 'Entry').value);
+            const exit = parseFloat(document.getElementById(component + 'Exit').value);
+            const quantity = parseInt(document.getElementById(component + 'Quantity').value);
+            const notes = document.getElementById(component + 'Notes').value;
+
+            // Validation
+            if (!strike || !entry || !exit || !quantity) {
+                alert('Please fill all required fields (Strike, Entry, Exit, Quantity)');
+                return;
+            }
+
+            const brokerage = parseFloat(document.getElementById(component + 'Brokerage').value) || 0;
+            
+            // Calculate P&L
+            const grossPL = (exit - entry) * quantity;
+            const netPL = grossPL - brokerage;
+            const plPercent = ((exit - entry) / entry * 100);
+
+            const trade = {
+                id: Date.now(),
+                date: selectedDate,
+                type: tradeType,
+                strike: strike,
+                entry: entry,
+                exit: exit,
+                quantity: quantity,
+                brokerage: brokerage,
+                notes: notes,
+                grossPL: grossPL,
+                netPL: netPL,
+                plPercent: plPercent,
+                component: component,
+                time: new Date().toLocaleTimeString()
+            };
+
+            // Initialize date structure if not exists
+            if (!tradesData[selectedDate]) {
+                tradesData[selectedDate] = {
+                    nifty: [],
+                    sensex: [],
+                    day: getDayName(selectedDate)
+                };
+            }
+
+            tradesData[selectedDate][component].push(trade);
+            saveData();
+            updateTradesTable(component);
+            updateSummary(component);
+            clearForm(component);
+        }
+
+        function getDayName(dateString) {
+            const date = new Date(dateString);
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            return days[date.getDay()];
+        }
+
+        function loadTodaysTrades() {
+            const selectedDate = document.getElementById('tradeDate').value;
+            
+            // Clear current displays
+            document.getElementById('niftyTradesBody').innerHTML = '';
+            document.getElementById('sensexTradesBody').innerHTML = '';
+            
+            if (tradesData[selectedDate]) {
+                updateTradesTable('nifty');
+                updateTradesTable('sensex');
+                updateSummary('nifty');
+                updateSummary('sensex');
+            } else {
+                // Reset summaries for new date
+                updateSummary('nifty');
+                updateSummary('sensex');
+            }
+        }
+
+        function updateTradesTable(component) {
+            const selectedDate = document.getElementById('tradeDate').value;
+            const tbody = document.getElementById(component + 'TradesBody');
+            tbody.innerHTML = '';
+
+            if (!tradesData[selectedDate] || !tradesData[selectedDate][component]) {
+                return;
+            }
+
+            tradesData[selectedDate][component].forEach(trade => {
+                const row = document.createElement('tr');
+                row.style.animation = 'slideIn 0.5s ease-out';
+                
+                const plColor = trade.netPL >= 0 ? '#27ae60' : '#e74c3c';
+                
+                row.innerHTML = `
+                    <td><span style="background: ${trade.type === 'CE' ? '#3498db' : '#e67e22'}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">${trade.type}</span></td>
+                    <td>${trade.strike}</td>
+                    <td>₹${trade.entry}</td>
+                    <td>₹${trade.exit}</td>
+                    <td>${trade.quantity}</td>
+                    <td style="color: ${plColor}; font-weight: 600;">₹${trade.netPL.toFixed(2)}</td>
+                    <td style="color: ${plColor}; font-weight: 600;">${trade.plPercent.toFixed(2)}%</td>
+                    <td><button class="delete-btn" onclick="deleteTrade('${component}', ${trade.id})">Delete</button></td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateSummary(component) {
+            const selectedDate = document.getElementById('tradeDate').value;
+            const trades = tradesData[selectedDate] ? tradesData[selectedDate][component] || [] : [];
+            const totalTrades = trades.length;
+            
+            if (totalTrades === 0) {
+                document.getElementById(component + 'TotalTrades').textContent = '0';
+                document.getElementById(component + 'TotalPL').textContent = '₹0';
+                document.getElementById(component + 'WinRate').textContent = '0%';
+                document.getElementById(component + 'BestTrade').textContent = '₹0';
+                return;
+            }
+
+            const totalPL = trades.reduce((sum, trade) => sum + trade.netPL, 0);
+            const winningTrades = trades.filter(trade => trade.netPL > 0).length;
+            const winRate = (winningTrades / totalTrades) * 100;
+            const bestTrade = Math.max(...trades.map(trade => trade.netPL));
+
+            document.getElementById(component + 'TotalTrades').textContent = totalTrades;
+            document.getElementById(component + 'TotalPL').textContent = '₹' + totalPL.toFixed(2);
+            document.getElementById(component + 'TotalPL').style.color = totalPL >= 0 ? '#27ae60' : '#e74c3c';
+            document.getElementById(component + 'WinRate').textContent = winRate.toFixed(1) + '%';
+            document.getElementById(component + 'BestTrade').textContent = '₹' + bestTrade.toFixed(2);
+        }
+
+        function deleteTrade(component, tradeId) {
+            const selectedDate = document.getElementById('tradeDate').value;
+            if (tradesData[selectedDate] && tradesData[selectedDate][component]) {
+                tradesData[selectedDate][component] = tradesData[selectedDate][component].filter(trade => trade.id !== tradeId);
+                
+                // Remove date entry if no trades left
+                if (tradesData[selectedDate].nifty.length === 0 && tradesData[selectedDate].sensex.length === 0) {
+                    delete tradesData[selectedDate];
+                }
+                
+                saveData();
+                updateTradesTable(component);
+                updateSummary(component);
+            }
+        }
+
+        function clearForm(component) {
+            const fields = ['Strike', 'Entry', 'Exit', 'Quantity', 'Brokerage', 'Notes'];
+            fields.forEach(field => {
+                const element = document.getElementById(component + field);
+                if (element) element.value = '';
+            });
+        }
+
+        function saveData() {
+            localStorage.setItem('tradingData', JSON.stringify(tradesData));
+        }
+
+        function showHistory() {
+            const modal = document.getElementById('historyModal');
+            const content = document.getElementById('historyContent');
+            
+            let historyHTML = '';
+            const sortedDates = Object.keys(tradesData).sort((a, b) => new Date(b) - new Date(a));
+            
+            if (sortedDates.length === 0) {
+                historyHTML = '<p style="text-align: center; color: #6c757d; font-size: 1.2rem; margin: 50px 0;">No trading history found. Start adding trades to see your history!</p>';
+            } else {
+                sortedDates.forEach(date => {
+                    const dayData = tradesData[date];
+                    const totalTrades = dayData.nifty.length + dayData.sensex.length;
+                    const totalPL = [...dayData.nifty, ...dayData.sensex].reduce((sum, trade) => sum + trade.netPL, 0);
+                    const niftyPL = dayData.nifty.reduce((sum, trade) => sum + trade.netPL, 0);
+                    const sensexPL = dayData.sensex.reduce((sum, trade) => sum + trade.netPL, 0);
+                    
+                    historyHTML += `
+                        <div class="date-card" onclick="toggleDateDetails('${date}')">
+                            <div class="date-card-header">
+                                <span style="font-size: 1.1rem;">${date} (${dayData.day})</span>
+                                <span style="color: ${totalPL >= 0 ? '#27ae60' : '#e74c3c'}; font-weight: 700; font-size: 1.2rem;">₹${totalPL.toFixed(2)}</span>
+                            </div>
+                            <div class="date-stats">
+                                <div class="stat-item">
+                                    <div style="font-weight: 600; color: #2c3e50;">Total Trades</div>
+                                    <div style="font-size: 1.1rem; font-weight: 700;">${totalTrades}</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div style="font-weight: 600; color: #e74c3c;">Nifty P&L</div>
+                                    <div style="color: ${niftyPL >= 0 ? '#27ae60' : '#e74c3c'}; font-weight: 700;">₹${niftyPL.toFixed(2)}</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div style="font-weight: 600; color: #27ae60;">Sensex P&L</div>
+                                    <div style="color: ${sensexPL >= 0 ? '#27ae60' : '#e74c3c'}; font-weight: 700;">₹${sensexPL.toFixed(2)}</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div style="font-weight: 600; color: #3498db;">Win Rate</div>
+                                    <div style="font-weight: 700;">${calculateWinRate([...dayData.nifty, ...dayData.sensex])}%</div>
+                                </div>
+                            </div>
+                            <div class="history-trades" id="trades-${date}">
+                                ${generateTradesList(dayData)}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            content.innerHTML = historyHTML;
+            modal.style.display = 'block';
+        }
+
+        function calculateWinRate(trades) {
+            if (trades.length === 0) return 0;
+            const winningTrades = trades.filter(trade => trade.netPL > 0).length;
+            return ((winningTrades / trades.length) * 100).toFixed(1);
+        }
+
+        function generateTradesList(dayData) {
+            const allTrades = [...dayData.nifty, ...dayData.sensex];
+            if (allTrades.length === 0) return '<p style="text-align: center; color: #6c757d; margin: 10px 0;">No trades for this day</p>';
+            
+            let tradesHTML = '<table style="width: 100%; margin-top: 15px; font-size: 0.85rem; border-collapse: collapse;">';
+            tradesHTML += '<thead><tr style="background: #f8f9fa;"><th style="padding: 8px; border: 1px solid #dee2e6;">Component</th><th style="padding: 8px; border: 1px solid #dee2e6;">Type</th><th style="padding: 8px; border: 1px solid #dee2e6;">Strike</th><th style="padding: 8px; border: 1px solid #dee2e6;">Entry</th><th style="padding: 8px; border: 1px solid #dee2e6;">Exit</th><th style="padding: 8px; border: 1px solid #dee2e6;">Qty</th><th style="padding: 8px; border: 1px solid #dee2e6;">Brokerage</th><th style="padding: 8px; border: 1px solid #dee2e6;">P&L</th><th style="padding: 8px; border: 1px solid #dee2e6;">Time</th></tr></thead><tbody>';
+            
+            allTrades.forEach(trade => {
+                const plColor = trade.netPL >= 0 ? '#27ae60' : '#e74c3c';
+                tradesHTML += `
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;"><span style="background: ${trade.component === 'nifty' ? '#e74c3c' : '#27ae60'}; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.7rem;">${trade.component.toUpperCase()}</span></td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;"><span style="background: ${trade.type === 'CE' ? '#3498db' : '#e67e22'}; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.7rem;">${trade.type}</span></td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;">${trade.strike}</td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;">₹${trade.entry}</td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;">₹${trade.exit}</td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6; color: ${plColor}; font-weight: 600;">₹${trade.grossPL.toFixed(2)}</td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6; font-size: 0.75rem;">${trade.time}</td>
+                    </tr>
+                `;
+            });
+            
+            tradesHTML += '</tbody></table>';
+            return tradesHTML;
+        }
+
+        function toggleDateDetails(date) {
+            const tradesDiv = document.getElementById(`trades-${date}`);
+            tradesDiv.classList.toggle('expanded');
+        }
+
+        function showNiftyHistory() {
+            const modal = document.getElementById('historyModal');
+            const content = document.getElementById('historyContent');
+            
+            let historyHTML = '<h2 style="color: #e74c3c; margin-bottom: 20px;">📈 Nifty Trading History</h2>';
+            const sortedDates = Object.keys(tradesData).sort((a, b) => new Date(b) - new Date(a));
+            
+            // Filter dates that have Nifty trades
+            const niftyDates = sortedDates.filter(date => tradesData[date].nifty.length > 0);
+            
+            if (niftyDates.length === 0) {
+                historyHTML += '<p style="text-align: center; color: #6c757d; font-size: 1.2rem; margin: 50px 0;">No Nifty trading history found!</p>';
+            } else {
+                historyHTML += generateComponentHistory('nifty', niftyDates);
+            }
+            
+            content.innerHTML = historyHTML;
+            modal.style.display = 'block';
+        }
+
+        function showSensexHistory() {
+            const modal = document.getElementById('historyModal');
+            const content = document.getElementById('historyContent');
+            
+            let historyHTML = '<h2 style="color: #27ae60; margin-bottom: 20px;">📉 Sensex Trading History</h2>';
+            const sortedDates = Object.keys(tradesData).sort((a, b) => new Date(b) - new Date(a));
+            
+            // Filter dates that have Sensex trades
+            const sensexDates = sortedDates.filter(date => tradesData[date].sensex.length > 0);
+            
+            if (sensexDates.length === 0) {
+                historyHTML += '<p style="text-align: center; color: #6c757d; font-size: 1.2rem; margin: 50px 0;">No Sensex trading history found!</p>';
+            } else {
+                historyHTML += generateComponentHistory('sensex', sensexDates);
+            }
+            
+            content.innerHTML = historyHTML;
+            modal.style.display = 'block';
+        }
+
+        function generateComponentHistory(component, dates) {
+            let html = '<div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; margin-top: 20px; background: rgba(15,23,42,0.95); border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);">';
+            html += `<thead><tr style="background: ${component === 'nifty' ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'linear-gradient(135deg, #10b981, #059669)'}; color: white;">
+                <th style="padding: 16px 12px; border: 1px solid rgba(255,255,255,0.2); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">Date</th>
+                <th style="padding: 16px 12px; border: 1px solid rgba(255,255,255,0.2); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">Day</th>
+                <th style="padding: 16px 12px; border: 1px solid rgba(255,255,255,0.2); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">Type</th>
+                <th style="padding: 16px 12px; border: 1px solid rgba(255,255,255,0.2); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">Strike</th>
+                <th style="padding: 16px 12px; border: 1px solid rgba(255,255,255,0.2); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">Entry</th>
+                <th style="padding: 16px 12px; border: 1px solid rgba(255,255,255,0.2); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">Exit</th>
+                <th style="padding: 16px 12px; border: 1px solid rgba(255,255,255,0.2); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">Quantity</th>
+                <th style="padding: 16px 12px; border: 1px solid rgba(255,255,255,0.2); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">Brokerage</th>
+                <th style="padding: 16px 12px; border: 1px solid rgba(255,255,255,0.2); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">Net P&L</th>
+                <th style="padding: 16px 12px; border: 1px solid rgba(255,255,255,0.2); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">P&L%</th>
+                <th style="padding: 16px 12px; border: 1px solid rgba(255,255,255,0.2); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">Notes</th>
+                <th style="padding: 16px 12px; border: 1px solid rgba(255,255,255,0.2); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">Time</th>
+            </tr></thead><tbody>`;
+            
+            dates.forEach(date => {
+                const dayData = tradesData[date];
+                const trades = dayData[component];
+                
+                trades.forEach((trade, index) => {
+                    const plColor = trade.netPL >= 0 ? '#10b981' : '#ef4444';
+                    const rowBg = index % 2 === 0 ? 'rgba(30,41,59,0.8)' : 'rgba(51,65,85,0.6)';
+                    html += `
+                        <tr style="background: ${rowBg}; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(59,130,246,0.2)'" onmouseout="this.style.background='${rowBg}'">
+                            <td style="padding: 14px 12px; border: 1px solid rgba(255,255,255,0.1); font-weight: 700; color: #f8fafc; font-size: 0.9rem;">${date}</td>
+                            <td style="padding: 14px 12px; border: 1px solid rgba(255,255,255,0.1); color: #e2e8f0; font-weight: 600;">${dayData.day}</td>
+                            <td style="padding: 14px 12px; border: 1px solid rgba(255,255,255,0.1);"><span style="background: ${trade.type === 'CE' ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)' : 'linear-gradient(135deg, #f59e0b, #d97706)'}; color: white; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">${trade.type}</span></td>
+                            <td style="padding: 14px 12px; border: 1px solid rgba(255,255,255,0.1); font-weight: 700; color: #f8fafc; font-size: 1rem;">${trade.strike}</td>
+                            <td style="padding: 14px 12px; border: 1px solid rgba(255,255,255,0.1); color: #e2e8f0; font-weight: 600; font-size: 0.95rem;">₹${trade.entry}</td>
+                            <td style="padding: 14px 12px; border: 1px solid rgba(255,255,255,0.1); color: #e2e8f0; font-weight: 600; font-size: 0.95rem;">₹${trade.exit}</td>
+                            <td style="padding: 14px 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center; color: #e2e8f0; font-weight: 600; font-size: 0.95rem;">${trade.quantity}</td>
+                            <td style="padding: 14px 12px; border: 1px solid rgba(255,255,255,0.1); color: #e2e8f0; font-weight: 600; font-size: 0.95rem;">₹${trade.brokerage.toFixed(2)}</td>
+                            <td style="padding: 14px 12px; border: 1px solid rgba(255,255,255,0.1); color: ${plColor}; font-weight: 800; font-size: 1.05rem;">₹${trade.netPL.toFixed(2)}</td>
+                            <td style="padding: 14px 12px; border: 1px solid rgba(255,255,255,0.1); color: ${plColor}; font-weight: 700; font-size: 0.95rem;">${trade.plPercent.toFixed(2)}%</td>
+                            <td style="padding: 14px 12px; border: 1px solid rgba(255,255,255,0.1); max-width: 150px; word-wrap: break-word; color: #94a3b8; font-size: 0.85rem; font-style: italic;">${trade.notes || '-'}</td>
+                            <td style="padding: 14px 12px; border: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem; color: #94a3b8; font-weight: 500;">${trade.time}</td>
+                        </tr>
+                    `;
+                });
+            });
+            
+            html += '</tbody></table></div>';
+            
+            // Add summary for this component
+            const allTrades = [];
+            dates.forEach(date => {
+                allTrades.push(...tradesData[date][component]);
+            });
+            
+            const totalTrades = allTrades.length;
+            const totalPL = allTrades.reduce((sum, trade) => sum + trade.netPL, 0);
+            const totalBrokerage = allTrades.reduce((sum, trade) => sum + trade.brokerage, 0);
+            const winningTrades = allTrades.filter(trade => trade.netPL > 0).length;
+            const winRate = totalTrades > 0 ? ((winningTrades / totalTrades) * 100).toFixed(1) : 0;
+            
+            html += `
+                <div style="margin-top: 30px; background: linear-gradient(135deg, rgba(30,41,59,0.9), rgba(51,65,85,0.9)); padding: 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(20px); box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+                    <h3 style="margin-top: 0; color: #f8fafc; text-align: center; font-size: 1.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; background: ${component === 'nifty' ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'linear-gradient(135deg, #10b981, #059669)'}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">${component} Overall Summary</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px;">
+                        <div style="background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1)); padding: 20px; border-radius: 16px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 12px 35px rgba(0,0,0,0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.3)'">
+                            <div style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Total Trades</div>
+                            <div style="font-size: 2rem; font-weight: 800; color: #f8fafc;">${totalTrades}</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1)); padding: 20px; border-radius: 16px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 12px 35px rgba(0,0,0,0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.3)'">
+                            <div style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Total P&L</div>
+                            <div style="font-size: 2rem; font-weight: 800; color: ${totalPL >= 0 ? '#10b981' : '#ef4444'};">₹${totalPL.toFixed(2)}</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1)); padding: 20px; border-radius: 16px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 12px 35px rgba(0,0,0,0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.3)'">
+                            <div style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Win Rate</div>
+                            <div style="font-size: 2rem; font-weight: 800; color: #3b82f6;">${winRate}%</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1)); padding: 20px; border-radius: 16px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 12px 35px rgba(0,0,0,0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.3)'">
+                            <div style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Total Brokerage</div>
+                            <div style="font-size: 2rem; font-weight: 800; color: #f59e0b;">₹${totalBrokerage.toFixed(2)}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            return html;
+        }
+
+        function closeHistory() {
+            document.getElementById('historyModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('historyModal');
+            if (event.target === modal) {
+                closeHistory();
+            }
+        }
+
+        // Prevent scroll wheel from changing number inputs
+        document.addEventListener('wheel', function(e) {
+            if (e.target.type === 'number') {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Prevent arrow keys from changing number inputs when focused
+        document.addEventListener('keydown', function(e) {
+            if (e.target.type === 'number' && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+                e.preventDefault();
+            }
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'984bba8113774081',t:'MTc1ODgxNTk2NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
